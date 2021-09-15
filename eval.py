@@ -1,3 +1,5 @@
+#! /usr/bin/env
+
 """
 Run evaluation with saved models.
 """

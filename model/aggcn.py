@@ -343,4 +343,3 @@ class MultiHeadAttention(nn.Module):
         attn = attention(query, key, mask=mask, dropout=self.dropout)
 
         return attn
-

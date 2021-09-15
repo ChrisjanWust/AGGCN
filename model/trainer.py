@@ -26,11 +26,7 @@ class Trainer(object):
         torch_utils.change_lr(self.optimizer, new_lr)
 
     def load(self, filename):
-        try:
-            checkpoint = torch.load(filename)
-        except BaseException:
-            print("Cannot load model from {}".format(filename))
-            exit()
+        checkpoint = torch.load(filename, map_location="cpu")
         self.model.load_state_dict(checkpoint['model'])
         self.opt = checkpoint['config']
 
