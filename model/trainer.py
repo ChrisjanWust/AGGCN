@@ -90,7 +90,7 @@ class GCNTrainer(Trainer):
         return loss_val
 
     def predict(self, batch, unsort=True):
-        inputs, labels, tokens, head, subj_pos, obj_pos, lens = unpack_batch(batch, self.opt['cuda'])
+        inputs, labels, tokens, head, subj_pos, obj_pos, lens = unpack_batch(batch, self.opt["cuda"])
         orig_idx = batch[11]
         # forward
         self.model.eval()

@@ -60,7 +60,7 @@ predictions = []
 all_probs = []
 batch_iter = tqdm(batch)
 for i, b in enumerate(batch_iter):
-    preds, probs, _ = trainer.predict(b)
+    preds, probs, _ = trainer.predict(b, cuda=opt["cuda"])
     predictions += preds
     all_probs += probs
 
@@ -69,4 +69,3 @@ p, r, f1 = scorer.score(batch.gold(), predictions, verbose=True)
 print("{} set evaluate result: {:.2f}\t{:.2f}\t{:.2f}".format(args.dataset,p,r,f1))
 
 print("Evaluation ended.")
-
