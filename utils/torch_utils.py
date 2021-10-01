@@ -160,9 +160,4 @@ def load(model, optimizer, filename):
 
 
 def load_config(filename):
-    try:
-        dump = torch.load(filename)
-    except BaseException:
-        print("[ Fail: model loading failed. ]")
-    return dump['config']
-
+    return torch.load(filename)

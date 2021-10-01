@@ -79,7 +79,7 @@ class GCNRelationModel(nn.Module):
             adj = [tree_to_adj(maxlen, tree, directed=False).reshape(1, maxlen, maxlen) for tree in trees]
             adj = np.concatenate(adj, axis=0)
             adj = torch.from_numpy(adj)
-            return Variable(adj.cuda()) if self.opt['cuda'] else Variable(adj)
+            return Variable(adj.eval())
 
         adj = inputs_to_tree_reps(head.data, l)
         h, pool_mask = self.gcn(adj, inputs)
@@ -138,7 +138,7 @@ class AGGCN(nn.Module):
 
     def encode_with_rnn(self, rnn_inputs, masks, batch_size):
         seq_lens = list(masks.data.eq(constant.PAD_ID).long().sum(1).squeeze())
-        h0, c0 = rnn_zero_state(batch_size, self.opt['rnn_hidden'], self.opt['rnn_layers'])
+        h0, c0 = rnn_zero_state(batch_size, self.opt['rnn_hidden'], self.opt['rnn_layers'], self.use_cuda)
         rnn_inputs = nn.utils.rnn.pack_padded_sequence(rnn_inputs, seq_lens, batch_first=True)
         rnn_outputs, (ht, ct) = self.rnn(rnn_inputs, (h0, c0))
         rnn_outputs, _ = nn.utils.rnn.pad_packed_sequence(rnn_outputs, batch_first=True)
@@ -202,8 +202,8 @@ class GraphConvLayer(nn.Module):
         for i in range(self.layers):
             self.weight_list.append(nn.Linear((self.mem_dim + self.head_dim * i), self.head_dim))
 
-        self.weight_list = self.weight_list.cuda()
-        self.linear_output = self.linear_output.cuda()
+        self.weight_list = self.weight_list.eval()
+        self.linear_output = self.linear_output.eval()
 
     def forward(self, adj, gcn_inputs):
         # gcn layer
@@ -251,8 +251,8 @@ class MultiGraphConvLayer(nn.Module):
             for j in range(self.layers):
                 self.weight_list.append(nn.Linear(self.mem_dim + self.head_dim * j, self.head_dim))
 
-        self.weight_list = self.weight_list.cuda()
-        self.Linear = self.Linear.cuda()
+        self.weight_list = self.weight_list.eval()
+        self.Linear = self.Linear.eval()
 
     def forward(self, adj_list, gcn_inputs):
 
@@ -297,11 +297,15 @@ def pool(h, mask, type='max'):
         return h.sum(1)
 
 
-def rnn_zero_state(batch_size, hidden_dim, num_layers, bidirectional=True):
+def rnn_zero_state(batch_size, hidden_dim, num_layers, use_cuda, bidirectional=True):
     total_layers = num_layers * 2 if bidirectional else num_layers
     state_shape = (total_layers, batch_size, hidden_dim)
     h0 = c0 = Variable(torch.zeros(*state_shape), requires_grad=False)
-    return h0.cuda(), c0.cuda()
+    if use_cuda:
+        return h0.cuda(), c0.cuda()
+    else:
+        return h0.cpu(), c0.cpu()
+
 
 
 def attention(query, key, mask=None, dropout=None):
@@ -343,4 +347,3 @@ class MultiHeadAttention(nn.Module):
         attn = attention(query, key, mask=mask, dropout=self.dropout)
 
         return attn
-

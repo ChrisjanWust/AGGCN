@@ -1,3 +1,5 @@
+#! /usr/bin/env
+
 """
 Run evaluation with saved models.
 """
@@ -5,10 +7,11 @@ import random
 import argparse
 from tqdm import tqdm
 import torch
+import json
 
 from data.loader import DataLoader
 from model.trainer import GCNTrainer
-from utils import torch_utils, scorer, constant, helper
+from utils import scorer, constant, helper
 from utils.vocab import Vocab
 
 
@@ -33,7 +36,9 @@ elif args.cuda:
 # load opt
 model_file = args.model_dir + '/' + args.model
 print("Loading model from {}".format(model_file))
-opt = torch_utils.load_config(model_file)
+with open(f"{args.model_dir}/config.json") as f:
+    opt = json.load(f)
+
 trainer = GCNTrainer(opt)
 trainer.load(model_file)
 
@@ -55,7 +60,7 @@ predictions = []
 all_probs = []
 batch_iter = tqdm(batch)
 for i, b in enumerate(batch_iter):
-    preds, probs, _ = trainer.predict(b)
+    preds, probs, _ = trainer.predict(b, cuda=opt["cuda"])
     predictions += preds
     all_probs += probs
 
@@ -64,4 +69,3 @@ p, r, f1 = scorer.score(batch.gold(), predictions, verbose=True)
 print("{} set evaluate result: {:.2f}\t{:.2f}\t{:.2f}".format(args.dataset,p,r,f1))
 
 print("Evaluation ended.")
-
